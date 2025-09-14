@@ -33,4 +33,42 @@ public final class Constants {
         /** Replaying from a log file. */
         REPLAY
     }
+
+    public static final class ElevatorConstants {
+        // CAN IDs
+        public static final int LEFT_MOTOR_ID = 10;
+        public static final int RIGHT_MOTOR_ID = 11;
+
+        // DIO ports
+        public static final int TOP_LIMIT_DIO = 0;
+        public static final int BOTTOM_LIMIT_DIO = 1;
+        public static final int CARRIAGE_SENSOR_DIO = 2;
+
+        // Physical constraints (meters)
+        public static final double MIN_HEIGHT_METERS = 0.0;
+        public static final double MAX_HEIGHT_METERS = 1.5;
+        public static final double POSITION_TOLERANCE_METERS = 0.02;
+
+        // PID constants (tune these values using Phoenix Tuner X)
+        public static final double KP = 24.0; // Proportional gain
+        public static final double KI = 0.0; // Integral gain
+        public static final double KD = 0.1; // Derivative gain
+
+        // Feedforward constants (characterize using SysId)
+        public static final double KS = 0.25; // Static friction (volts)
+        public static final double KV = 2.4; // Velocity constant (volts per rotation/sec)
+        public static final double KA = 0.05; // Acceleration constant (volts per rotation/sec²)
+
+        // Motion Magic constants (in rotations and rotations/sec)
+        public static final double CRUISE_VELOCITY_ROTATIONS_PER_SEC = 8.0; // ~0.67 m/s
+        public static final double MAX_ACCELERATION_ROTATIONS_PER_SEC_SQUARED = 16.0; // ~1.33 m/s²
+        public static final double MAX_JERK_ROTATIONS_PER_SEC_CUBED = 160.0; // ~13.3 m/s³
+
+        // Preset positions
+        public static final double BOTTOM_POSITION = 0.0;
+        public static final double LOW_POSITION = 0.3;
+        public static final double MID_POSITION = 0.75;
+        public static final double HIGH_POSITION = 1.2;
+        public static final double TOP_POSITION = 1.4;
+    }
 }
