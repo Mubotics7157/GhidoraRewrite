@@ -14,9 +14,7 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
-import static edu.wpi.first.units.Units.Degrees;
 import static frc.robot.subsystems.vision.VisionConstants.*;
-import static frc.robot.subsystems.vision.VisionConstants.robotToCamera1;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -26,10 +24,12 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.elevator.*;
 import frc.robot.subsystems.drive.*;
 import frc.robot.subsystems.vision.*;
 import org.ironmaple.simulation.SimulatedArena;
@@ -47,17 +47,25 @@ public class RobotContainer {
     // Subsystems
     private final Drive drive;
     private final Vision vision;
+    private final Elevator elevator;
 
     private SwerveDriveSimulation driveSimulation = null;
 
     // Controller
     private final CommandXboxController controller = new CommandXboxController(0);
+    private final CommandXboxController operator = new CommandXboxController(1);
 
     // Dashboard inputs
     private final LoggedDashboardChooser<Command> autoChooser;
 
     /** The container for the robot. Contains subsystems, OI devices, and commands. */
     public RobotContainer() {
+        if(Robot.isReal()){
+                elevator = new Elevator(new ElevatorIOTalonFX());
+        }
+        else{
+                elevator = new Elevator(new ElevatorIOSim());
+        }
         switch (Constants.currentMode) {
             case REAL:
                 // Real robot, instantiate hardware IO implementations
@@ -157,30 +165,66 @@ public class RobotContainer {
                 : () -> drive.setPose(new Pose2d(drive.getPose().getTranslation(), new Rotation2d())); // zero gyro
         controller.start().onTrue(Commands.runOnce(resetGyro, drive).ignoringDisable(true));
 
+        operator.a().onTrue(
+            elevator.runOnce(() -> elevator.setGoalPosition(Constants.ElevatorConstants.BOTTOM_POSITION))
+        );
+        
+        operator.b().onTrue(
+            elevator.runOnce(() -> elevator.setGoalPosition(Constants.ElevatorConstants.LOW_POSITION))
+        );
+        
+        operator.x().onTrue(
+            elevator.runOnce(() -> elevator.setGoalPosition(Constants.ElevatorConstants.MID_POSITION))
+        );
+        
+        operator.y().onTrue(
+            elevator.runOnce(() -> elevator.setGoalPosition(Constants.ElevatorConstants.HIGH_POSITION))
+        );
+        
+        // Manual control overrides Motion Magic
+        elevator.setDefaultCommand(
+            new RunCommand(() -> {
+                double leftTrigger = operator.getLeftTriggerAxis();
+                double rightTrigger = operator.getRightTriggerAxis();
+                double speed = rightTrigger - leftTrigger;
+                
+                if (Math.abs(speed) > 0.1) {
+                    elevator.setVoltage(speed * 10.0); // Max 10V manual
+                } else if (!elevator.atSetpoint()) {
+                    // Hold position when not manually controlling
+                    elevator.setGoalPosition(elevator.getPosition());
+                }
+            }, elevator)
+        );
+        
+        // Reset encoder
+        operator.start().onTrue(
+            elevator.runOnce(() -> elevator.resetEncoder())
+        );
         // Example Coral Placement Code
         // TODO: delete these code for your own project
-        if (Constants.currentMode == Constants.Mode.SIM) {
-            // L4 placement
-            controller.y().onTrue(Commands.runOnce(() -> SimulatedArena.getInstance()
-                    .addGamePieceProjectile(new ReefscapeCoralOnFly(
-                            driveSimulation.getSimulatedDriveTrainPose().getTranslation(),
-                            new Translation2d(0.4, 0),
-                            driveSimulation.getDriveTrainSimulatedChassisSpeedsFieldRelative(),
-                            driveSimulation.getSimulatedDriveTrainPose().getRotation(),
-                            Meters.of(2),
-                            MetersPerSecond.of(1.5),
-                            Degrees.of(-80)))));
-            // L3 placement
-            controller.b().onTrue(Commands.runOnce(() -> SimulatedArena.getInstance()
-                    .addGamePieceProjectile(new ReefscapeCoralOnFly(
-                            driveSimulation.getSimulatedDriveTrainPose().getTranslation(),
-                            new Translation2d(0.4, 0),
-                            driveSimulation.getDriveTrainSimulatedChassisSpeedsFieldRelative(),
-                            driveSimulation.getSimulatedDriveTrainPose().getRotation(),
-                            Meters.of(1.35),
-                            MetersPerSecond.of(1.5),
-                            Degrees.of(-60)))));
-        }
+        // if (Constants.currentMode == Constants.Mode.SIM) {
+        //     // L4 placement
+        //     controller.y().onTrue(Commands.runOnce(() -> SimulatedArena.getInstance()
+        //             .addGamePieceProjectile(new ReefscapeCoralOnFly(
+        //                     driveSimulation.getSimulatedDriveTrainPose().getTranslation(),
+        //                     new Translation2d(0.4, 0),
+        //                     driveSimulation.getDriveTrainSimulatedChassisSpeedsFieldRelative(),
+        //                     driveSimulation.getSimulatedDriveTrainPose().getRotation(),
+        //                     Meters.of(2),
+        //                     MetersPerSecond.of(1.5),
+        //                     Degrees.of(-80)))));
+        //     // L3 placement
+        //     controller.b().onTrue(Commands.runOnce(() -> SimulatedArena.getInstance()
+        //             .addGamePieceProjectile(new ReefscapeCoralOnFly(
+        //                     driveSimulation.getSimulatedDriveTrainPose().getTranslation(),
+        //                     new Translation2d(0.4, 0),
+        //                     driveSimulation.getDriveTrainSimulatedChassisSpeedsFieldRelative(),
+        //                     driveSimulation.getSimulatedDriveTrainPose().getRotation(),
+        //                     Meters.of(1.35),
+        //                     MetersPerSecond.of(1.5),
+        //                     Degrees.of(-60)))));
+        // }
     }
 
     /**
