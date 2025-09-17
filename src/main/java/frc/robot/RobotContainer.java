@@ -19,7 +19,6 @@ import static frc.robot.subsystems.vision.VisionConstants.*;
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -29,12 +28,11 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
-import frc.robot.subsystems.elevator.*;
 import frc.robot.subsystems.drive.*;
+import frc.robot.subsystems.elevator.*;
 import frc.robot.subsystems.vision.*;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
-import org.ironmaple.simulation.seasonspecific.reefscape2025.ReefscapeCoralOnFly;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -60,11 +58,10 @@ public class RobotContainer {
 
     /** The container for the robot. Contains subsystems, OI devices, and commands. */
     public RobotContainer() {
-        if(Robot.isReal()){
-                elevator = new Elevator(new ElevatorIOTalonFX());
-        }
-        else{
-                elevator = new Elevator(new ElevatorIOSim());
+        if (Robot.isReal()) {
+            elevator = new Elevator(new ElevatorIOTalonFX());
+        } else {
+            elevator = new Elevator(new ElevatorIOSim());
         }
         switch (Constants.currentMode) {
             case REAL:
@@ -165,42 +162,34 @@ public class RobotContainer {
                 : () -> drive.setPose(new Pose2d(drive.getPose().getTranslation(), new Rotation2d())); // zero gyro
         controller.start().onTrue(Commands.runOnce(resetGyro, drive).ignoringDisable(true));
 
-        operator.a().onTrue(
-            elevator.runOnce(() -> elevator.setGoalPosition(Constants.ElevatorConstants.BOTTOM_POSITION))
-        );
-        
-        operator.b().onTrue(
-            elevator.runOnce(() -> elevator.setGoalPosition(Constants.ElevatorConstants.LOW_POSITION))
-        );
-        
-        operator.x().onTrue(
-            elevator.runOnce(() -> elevator.setGoalPosition(Constants.ElevatorConstants.MID_POSITION))
-        );
-        
-        operator.y().onTrue(
-            elevator.runOnce(() -> elevator.setGoalPosition(Constants.ElevatorConstants.HIGH_POSITION))
-        );
-        
+        operator.a()
+                .onTrue(elevator.runOnce(() -> elevator.setGoalPosition(Constants.ElevatorConstants.BOTTOM_POSITION)));
+
+        operator.b().onTrue(elevator.runOnce(() -> elevator.setGoalPosition(Constants.ElevatorConstants.LOW_POSITION)));
+
+        operator.x().onTrue(elevator.runOnce(() -> elevator.setGoalPosition(Constants.ElevatorConstants.MID_POSITION)));
+
+        operator.y()
+                .onTrue(elevator.runOnce(() -> elevator.setGoalPosition(Constants.ElevatorConstants.HIGH_POSITION)));
+
         // Manual control overrides Motion Magic
-        elevator.setDefaultCommand(
-            new RunCommand(() -> {
-                double leftTrigger = operator.getLeftTriggerAxis();
-                double rightTrigger = operator.getRightTriggerAxis();
-                double speed = rightTrigger - leftTrigger;
-                
-                if (Math.abs(speed) > 0.1) {
-                    elevator.setVoltage(speed * 10.0); // Max 10V manual
-                } else if (!elevator.atSetpoint()) {
-                    // Hold position when not manually controlling
-                    elevator.setGoalPosition(elevator.getPosition());
-                }
-            }, elevator)
-        );
-        
+        elevator.setDefaultCommand(new RunCommand(
+                () -> {
+                    double leftTrigger = operator.getLeftTriggerAxis();
+                    double rightTrigger = operator.getRightTriggerAxis();
+                    double speed = rightTrigger - leftTrigger;
+
+                    if (Math.abs(speed) > 0.1) {
+                        elevator.setVoltage(speed * 10.0); // Max 10V manual
+                    } else if (!elevator.atSetpoint()) {
+                        // Hold position when not manually controlling
+                        elevator.setGoalPosition(elevator.getPosition());
+                    }
+                },
+                elevator));
+
         // Reset encoder
-        operator.start().onTrue(
-            elevator.runOnce(() -> elevator.resetEncoder())
-        );
+        operator.start().onTrue(elevator.runOnce(() -> elevator.resetEncoder()));
         // Example Coral Placement Code
         // TODO: delete these code for your own project
         // if (Constants.currentMode == Constants.Mode.SIM) {

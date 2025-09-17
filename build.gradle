@@ -36,9 +36,11 @@ deploy {
                     // Set the minimum heap size to the maximum heap size to avoid resizing
                     jvmArgs.add("-Xmx" + MAX_JAVA_HEAP_SIZE_MB + "M")
                     jvmArgs.add("-Xms" + MAX_JAVA_HEAP_SIZE_MB + "M")
-                    jvmArgs.add("-XX:GCTimeRatio=5")
-                    jvmArgs.add("-XX:+UseSerialGC")
-                    jvmArgs.add("-XX:MaxGCPauseMillis=50")
+
+                    // following 3 lines should only run on rio 2
+                    //jvmArgs.add("-XX:GCTimeRatio=5")
+                    //jvmArgs.add("-XX:+UseSerialGC")
+                    //jvmArgs.add("-XX:MaxGCPauseMillis=50")
                 }
 
                 // Static files artifact
