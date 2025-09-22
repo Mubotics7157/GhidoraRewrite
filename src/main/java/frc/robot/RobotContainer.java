@@ -23,7 +23,6 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
@@ -173,20 +172,20 @@ public class RobotContainer {
                 .onTrue(elevator.runOnce(() -> elevator.setGoalPosition(Constants.ElevatorConstants.HIGH_POSITION)));
 
         // Manual control overrides Motion Magic
-        elevator.setDefaultCommand(new RunCommand(
-                () -> {
-                    double leftTrigger = operator.getLeftTriggerAxis();
-                    double rightTrigger = operator.getRightTriggerAxis();
-                    double speed = rightTrigger - leftTrigger;
+        // elevator.setDefaultCommand(new RunCommand(
+        //         () -> {
+        //             double leftTrigger = operator.getLeftTriggerAxis();
+        //             double rightTrigger = operator.getRightTriggerAxis();
+        //             double speed = rightTrigger - leftTrigger;
 
-                    if (Math.abs(speed) > 0.1) {
-                        elevator.setVoltage(speed * 10.0); // Max 10V manual
-                    } else if (!elevator.atSetpoint()) {
-                        // Hold position when not manually controlling
-                        elevator.setGoalPosition(elevator.getPosition());
-                    }
-                },
-                elevator));
+        //             if (Math.abs(speed) > 0.1) {
+        //                 elevator.setVoltage(speed * 10.0); // Max 10V manual
+        //             } else if (!elevator.atSetpoint()) {
+        //                 // Hold position when not manually controlling
+        //                 elevator.setGoalPosition(elevator.getPosition());
+        //             }
+        //         },
+        //         elevator));
 
         // Reset encoder
         operator.start().onTrue(elevator.runOnce(() -> elevator.resetEncoder()));
